@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/olasunkanmi-SE/codebuddy/main/schemas/security-config-v1.json",
+  "version": 1,
+  "allowedPaths": [
+    {
+      "path": "/Users/milankatia/Desktop/image-processor",
+      "allowReadWrite": true,
+      "description": "image-processor"
+    }
+  ],
+  "commandDenyPatterns": [],
+  "networkAllowPatterns": [],
+  "networkDenyPatterns": [],
+  "blockedPathPatterns": []
+}
