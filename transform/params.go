@@ -40,13 +40,28 @@ func ParsePath(path string) (Options, string, error) {
 	filename := segments[len(segments)-1]
 	tokens := segments[:len(segments)-1]
 
+	opts, err := parseTokens(tokens)
+	if err != nil {
+		return Options{}, "", err
+	}
+	return opts, filename, nil
+}
+
+// ParseTokens parses a path made up entirely of transform tokens, with no
+// trailing source filename. Used when the source image is supplied out-of-band
+// (e.g. a ?url= query parameter): "/f_webp/q_80/r_320/" → Options{...}.
+func ParseTokens(path string) (Options, error) {
+	return parseTokens(splitNonEmpty(path, "/"))
+}
+
+func parseTokens(tokens []string) (Options, error) {
 	opts := Options{}
 	for _, tok := range tokens {
 		if err := applyToken(&opts, tok); err != nil {
-			return Options{}, "", err
+			return Options{}, err
 		}
 	}
-	return opts, filename, nil
+	return opts, nil
 }
 
 // applyToken parses a single "<key>_<value>" token into opts.

@@ -21,9 +21,29 @@ describes the desired output:
 | `q_*`  | encode quality     | integer `1`–`100`             | yes (encoder default) |
 | `r_*`  | resize width (px)  | positive integer              | yes (no resize) |
 
-Tokens may appear in any order and are all optional — `/123.png` returns the
-original. The final path segment is always the source filename, resolved inside
-`./images` (directory traversal is stripped).
+Tokens may appear in any order and are all optional.
+
+## Source image: remote or local
+
+The source can come from either place:
+
+**Remote (`?url=`)** — the image is fetched from any public http(s) URL:
+
+```
+/f_webp/q_80/r_320/?url=https://example.com/photo.jpg
+```
+
+Remote fetching is SSRF-guarded: only `http`/`https` schemes are allowed,
+URLs resolving to loopback/private/link-local addresses are refused (the check
+runs at dial time, so it survives redirects and DNS rebinding), the response
+body is capped (25 MiB), and a 10s timeout applies.
+
+**Local** — the final path segment is a filename under `./images`
+(directory traversal is stripped):
+
+```
+/f_webp/q_80/r_320/123.png      →  ./images/123.png
+```
 
 ## Run
 
@@ -33,24 +53,29 @@ go build -o imgproc .
 ```
 
 ```bash
+# remote source
+curl -o out.webp "http://localhost:8080/f_webp/q_80/r_320/?url=https://picsum.photos/1200/800.jpg"
+# local source
 curl -o out.webp http://localhost:8080/f_webp/q_80/r_320/123.png
 ```
 
 ## Responses
 
 - `200` — transformed image (`Content-Type` set to the output format, `Cache-Control: public, max-age=86400`)
-- `400` — malformed/unsupported token (e.g. `f_bmp`, `q_0`)
-- `404` — source image not found
+- `400` — malformed/unsupported token (`f_bmp`, `q_0`), bad `?url=` scheme, or a blocked (private) address
+- `404` — local source image not found
 - `422` — source could not be decoded/encoded
+- `502` — remote origin unreachable or returned a non-200
 
 ## Layout
 
 ```
-main.go              HTTP server + request handler
+main.go              HTTP server + request handler (remote vs local routing)
 transform/params.go  URL token → Options parser
 transform/process.go libvips pipeline (resize → encode)
-transform/*_test.go  unit tests for parsing and the real vips pipeline
-images/              source images
+source/fetch.go      SSRF-guarded remote image fetcher
+*/*_test.go          unit tests for parsing, fetching, and the real vips pipeline
+images/              local source images
 ```
 
 ## Test
