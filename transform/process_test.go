@@ -98,6 +98,37 @@ func TestApply(t *testing.T) {
 	})
 }
 
+// TestApplyAllFormats verifies every supported output format encodes to a
+// buffer that libvips can decode back, with the right content type.
+func TestApplyAllFormats(t *testing.T) {
+	src := makePNG(t, 200, 150)
+	cases := []struct {
+		format      Format
+		wantContent string
+	}{
+		{FormatJPEG, "image/jpeg"},
+		{FormatPNG, "image/png"},
+		{FormatWebP, "image/webp"},
+		{FormatAVIF, "image/avif"},
+		{FormatGIF, "image/gif"},
+		{FormatTIFF, "image/tiff"},
+	}
+	for _, tc := range cases {
+		t.Run(string(tc.format), func(t *testing.T) {
+			res, err := Apply(src, Options{Format: tc.format, Quality: 60, Width: 100})
+			if err != nil {
+				t.Fatalf("Apply(%s): %v", tc.format, err)
+			}
+			if res.ContentType != tc.wantContent {
+				t.Errorf("ContentType = %q, want %q", res.ContentType, tc.wantContent)
+			}
+			// Round-trip: the output must be a valid, decodable image at the
+			// requested width.
+			assertVipsWidth(t, res.Data, 100, 75)
+		})
+	}
+}
+
 // assertVipsWidth re-decodes data with libvips and checks its dimensions —
 // works for formats Go's stdlib can't read (webp/avif).
 func assertVipsWidth(t *testing.T, data []byte, wantW, wantH int) {

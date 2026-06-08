@@ -17,6 +17,8 @@ const (
 	FormatPNG      Format = "png"
 	FormatWebP     Format = "webp"
 	FormatAVIF     Format = "avif"
+	FormatGIF      Format = "gif"
+	FormatTIFF     Format = "tiff"
 )
 
 // Options is a parsed, validated transform spec. The zero value is a no-op
@@ -107,6 +109,10 @@ func parseFormat(v string) (Format, error) {
 		return FormatWebP, nil
 	case "avif":
 		return FormatAVIF, nil
+	case "gif":
+		return FormatGIF, nil
+	case "tiff", "tif":
+		return FormatTIFF, nil
 	default:
 		return FormatOriginal, fmt.Errorf("unsupported format %q", v)
 	}

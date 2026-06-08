@@ -17,11 +17,16 @@ describes the desired output:
 
 | Token  | Meaning            | Values                        | Optional |
 |--------|--------------------|-------------------------------|----------|
-| `f_*`  | output format      | `jpeg`/`jpg`, `png`, `webp`, `avif` | yes (keeps source format) |
+| `f_*`  | output format      | `jpeg`/`jpg`, `png`, `webp`, `avif`, `gif`, `tiff`/`tif` | yes (keeps source format) |
 | `q_*`  | encode quality     | integer `1`–`100`             | yes (encoder default) |
 | `r_*`  | resize width (px)  | positive integer              | yes (no resize) |
 
 Tokens may appear in any order and are all optional.
+
+**Formats** — output (`f_*`) is one of `jpeg`, `png`, `webp`, `avif`, `gif`, `tiff`.
+Input can be any of those plus anything else libvips decodes (heic, svg, pdf, …);
+when `f_*` is omitted the source format is preserved. AVIF encodes at a reduced
+effort level so responses stay sub-second on large images.
 
 ## Source image: remote or local
 

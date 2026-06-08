@@ -6,6 +6,10 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
+// avifEffort controls the AV1 encoder search effort (0=fastest … 9=smallest).
+// 3 keeps responses sub-second on large images while staying smaller than WebP.
+const avifEffort = 3
+
 // Result holds the encoded output of a transform.
 type Result struct {
 	Data        []byte
@@ -67,6 +71,10 @@ func encode(img *vips.ImageRef, opts Options) (Result, error) {
 		data, _, err = img.ExportJpeg(p)
 	case FormatAVIF:
 		p := vips.NewAvifExportParams()
+		// AV1 encoding is CPU-heavy; the library default Effort (5) can take
+		// >1s on large images. A lower effort trades a little size for a much
+		// faster response, which matters for an on-the-fly HTTP service.
+		p.Effort = avifEffort
 		if opts.Quality > 0 {
 			p.Quality = opts.Quality
 		}
@@ -77,6 +85,18 @@ func encode(img *vips.ImageRef, opts Options) (Result, error) {
 			p.Quality = opts.Quality
 		}
 		data, _, err = img.ExportPng(p)
+	case FormatGIF:
+		p := vips.NewGifExportParams()
+		if opts.Quality > 0 {
+			p.Quality = opts.Quality
+		}
+		data, _, err = img.ExportGIF(p)
+	case FormatTIFF:
+		p := vips.NewTiffExportParams()
+		if opts.Quality > 0 {
+			p.Quality = opts.Quality
+		}
+		data, _, err = img.ExportTiff(p)
 	default:
 		// Unknown native format (e.g. GIF/TIFF source with no override):
 		// fall back to PNG, a safe lossless container.
@@ -102,6 +122,10 @@ func nativeFormat(t vips.ImageType) Format {
 		return FormatWebP
 	case vips.ImageTypeAVIF:
 		return FormatAVIF
+	case vips.ImageTypeGIF:
+		return FormatGIF
+	case vips.ImageTypeTIFF:
+		return FormatTIFF
 	default:
 		return FormatOriginal
 	}
@@ -118,6 +142,10 @@ func contentType(f Format) string {
 		return "image/webp"
 	case FormatAVIF:
 		return "image/avif"
+	case FormatGIF:
+		return "image/gif"
+	case FormatTIFF:
+		return "image/tiff"
 	default:
 		return "application/octet-stream"
 	}

@@ -34,6 +34,18 @@ func TestParsePath(t *testing.T) {
 			wantOpts: Options{Format: FormatJPEG},
 			wantFile: "123.png",
 		},
+		{
+			name:     "gif format",
+			path:     "/f_gif/123.png",
+			wantOpts: Options{Format: FormatGIF},
+			wantFile: "123.png",
+		},
+		{
+			name:     "tif alias normalizes to tiff",
+			path:     "/f_tif/123.png",
+			wantOpts: Options{Format: FormatTIFF},
+			wantFile: "123.png",
+		},
 		{name: "quality below range", path: "/q_0/123.png", wantErr: true},
 		{name: "quality above range", path: "/q_101/123.png", wantErr: true},
 		{name: "negative width", path: "/r_-5/123.png", wantErr: true},
